@@ -101,15 +101,17 @@ def run(input_file: str, weight_wirelength: float, weight_detour: float, detour_
                                                           detour_cost_function=detour_cost_function,
                                                           weight_overflow=weight_overflow,
                                                           overflow_manager=overflow_manager)
+    
+    optimizer: ForestOptimizer = ForestOptimizer(restrees=restrees,
+                                                 overflow_manager=overflow_manager,
+                                                 evaluator=evaluator)
+    
     msghandler = MessageAggregateHandler()
     for tree in restrees:
         msghandler.set_net_id(tree.net_id)
         evaluator.get_cost(tree, msghandler.callback)
     outputmanager.write_file("cost_0.csv", msghandler.get_message())
     
-    optimizer: ForestOptimizer = ForestOptimizer(restrees=restrees,
-                                                 overflow_manager=overflow_manager,
-                                                 evaluator=evaluator)
     optimizer.optimize()
     
     msghandler = MessageAggregateHandler()
