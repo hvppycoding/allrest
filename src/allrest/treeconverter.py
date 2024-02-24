@@ -4,6 +4,7 @@ from allrest.pin import Pin
 from allrest.restree import RESTree
 from allrest.res import RES
 from allrest.steinergraph import SteinerGraph, SteinerNode
+from allrest.steinertree import SteinerTree, SteinerTreeBranch
 
 
 class ConverterNode:
@@ -208,12 +209,34 @@ class TreeConverter:
         
         return RESTree(0, pins, RES(res))
         
-    def convert(self) -> SteinerGraph:
+    def convert_to_steiner_graph(self) -> SteinerGraph:
         self.initialize_nodes()
         self.initialize_edges()
         self.steinerize()
-        res = self.to_steiner_graph()
-        return res
+        steiner_graph = self.to_steiner_graph()
+        return steiner_graph
+    
+    def convert_to_steiner_tree(self) -> SteinerTree:
+        steiner_graph = self.convert_to_steiner_graph()
+        steiner_graph = self.split_degree_4_nodes(steiner_graph)
+        parent_map: Dict[int, int] = {}
+        start_node = steiner_graph[self.restree.driver_index]
+        parent_map[start_node.index] = start_node.index
+        length = self.run_dfs(start_node, parent_map)
+        branches: List[SteinerTreeBranch] = []
+        for node in steiner_graph:
+            branches.append(SteinerTreeBranch(node.x, node.y, parent_map[node.index]))
+        return SteinerTree(self.restree.n_pins, length, branches)
+        
+    def run_dfs(self, node: SteinerNode, parent_map: Dict[int, int]) -> int:
+        length = 0
+        for neighbor in node.neighbors:
+            if neighbor.index in parent_map:
+                continue
+            parent_map[neighbor.index] = node.index
+            length += abs(node.x - neighbor.x) + abs(node.y - neighbor.y)
+            length += self.run_dfs(neighbor, parent_map)
+        return length        
 
     def best_steiner_for_node(self, node: ConverterNode) -> SteinerCandidate:
         best_gain = 0
@@ -349,9 +372,37 @@ class TreeConverter:
             for neighbor in convnode.right_neighbors:
                 graphnode.add_neighbor(node_map[neighbor])
         return SteinerGraph(graph_nodes)
-
+    
+    def split_degree_4_nodes(self, steiner_graph: SteinerGraph) -> SteinerGraph:
+        from collections import deque
+        queue = deque()
+        for node in steiner_graph:
+            queue.append(node)
+        
+        while len(queue) > 0:
+            node: SteinerNode = queue.popleft()
+            if len(node.neighbors) <= 3:
+                continue
+            new_node = SteinerNode(len(steiner_graph), node.x, node.y, False, None)
+            steiner_graph.add_node(new_node)
+            
+            next_neighbor_nodes = []
+            for idx, neighbor_node in enumerate(node.neighbors):
+                if idx <= 1:
+                    next_neighbor_nodes.append(neighbor_node)
+                    continue
+                if node in neighbor_node.neighbors:
+                    neighbor_node.neighbors.remove(node)
+                neighbor_node.neighbors.append(new_node)
+                new_node.neighbors.append(neighbor_node)
+            node.neighbors = next_neighbor_nodes
+            node.neighbors.append(new_node)
+            new_node.neighbors.append(node)
+            queue.append(new_node)
+        return steiner_graph
+    
 def convert_to_steiner_graph(restree: RESTree) -> SteinerGraph:
-    return TreeConverter(restree).convert()
+    return TreeConverter(restree).convert_to_steiner_graph()
 
 
 if __name__ == "__main__":

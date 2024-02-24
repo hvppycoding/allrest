@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Callable
 from abc import ABC, abstractmethod
 from allrest.res import RES
 from allrest.restree import RESTree
@@ -9,14 +9,11 @@ import numpy as np
 
 
 class RESTreeAbstractEvaluator(ABC):
-    def __init__(self, weight: float = 1.0):
-        self.weight: float = weight
-        
-    def get_weighted_cost(self, restree: RESTree) -> float:
-        return self.get_cost(restree) * self.weight
-         
+    def __init__(self, name: str):
+        self.name: str = name
+
     @abstractmethod
-    def get_cost(self, restree: RESTree) -> float:
+    def get_cost(self, restree: RESTree, callback: Callable[[str, float, str], None]) -> float:
         pass
 
 

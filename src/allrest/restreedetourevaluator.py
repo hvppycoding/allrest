@@ -16,11 +16,11 @@ def default_weight_function(pin: Pin) -> float:
 
 
 class RESTreeDetourEvaluator(RESTreeAbstractEvaluator):
-    def __init__(self, weight_function: Callable[[Pin], float]=default_weight_function, weight: float=1.0):
-        super().__init__(weight)
+    def __init__(self, weight_function: Callable[[Pin], float]=default_weight_function):
+        super().__init__("RESTreeDetourEvaluator")
         self.weight_function: Callable[[Pin], float] = weight_function
     
-    def get_cost(self, restree: RESTree) -> float:
+    def get_cost(self, restree: RESTree, callback: Callable[[str, float, str], None]=None) -> float:
         pathlengths: Dict[int, int] = self.calculate_pathlength_from_driver(restree)
         manhattan_distances: Dict[int, int] = self.calculate_manhattan_distance_from_driver(restree)
         
@@ -36,6 +36,8 @@ class RESTreeDetourEvaluator(RESTreeAbstractEvaluator):
             cost = weight * detour
             # print(f"Pin {i} detour: {detour}, cost: {cost:.6f}, weight: {weight:.6f}, slack: {slack:.6g}")
             total_cost += cost
+        if callback:
+            callback("RESTreeDetourEvaluator", total_cost, "detour cost")
         return total_cost
     
     def calculate_manhattan_distance_from_driver(self, restree: RESTree) -> Dict[int, int]:
@@ -53,9 +55,9 @@ class RESTreeDetourEvaluator(RESTreeAbstractEvaluator):
         return manhattan_distances
         
     def calculate_pathlength_from_driver(self, restree: RESTree) -> Dict[int, int]:
-        steiner_graph: SteinerGraph = TreeConverter(restree).convert()
+        steiner_graph: SteinerGraph = TreeConverter(restree).convert_to_steiner_graph()
         driver_index = restree.driver_index
-        driver_node: SteinerNode = steiner_graph.get_node(driver_index)
+        driver_node: SteinerNode = steiner_graph[driver_index]
         
         pathlengths = {}
         self.calculate_pathlength_helper(driver_node, 0, pathlengths)
@@ -66,7 +68,7 @@ class RESTreeDetourEvaluator(RESTreeAbstractEvaluator):
         
         filtered_pathlengths = {}
         for index, pathlength in sorted(pathlengths.items()):
-            node = steiner_graph.get_node(index)
+            node = steiner_graph[index]
             if node.is_pin:
                 filtered_pathlengths[index] = pathlength
         return filtered_pathlengths

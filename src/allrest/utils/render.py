@@ -36,6 +36,7 @@ def render_RES(RES1D: List[int],
                y: List[int],
                driver_index: int, 
                critical_index: List[int]=None,
+               description: str="",
                filepath: str=None,
                overflow_manager: OverflowManager=None):
     fig, ax = plt.subplots(figsize=(8, 8))
@@ -90,16 +91,20 @@ def render_RES(RES1D: List[int],
     # ax.set_title(f"RES: {res_tree.RES}\nWL: {res_tree.real_wirelength:.2f}")
     
     # filepath = outputmanager.get_output_path(filename)
+    if description:
+        plt.subplots_adjust(bottom=0.3)
+        plt.figtext(0.1, 0.05, description, ha='left', va='bottom', fontsize=10)
     fig.savefig(filepath)
     fig.clf()
     plt.close(fig)
     
-def render_RESTree(restree: RESTree, filepath: str=None, overflow_manager: OverflowManager=None):
+def render_RESTree(restree: RESTree, title: str="", filepath: str=None, overflow_manager: OverflowManager=None):
     critical_index = []
     for pin in restree.pins:
         if pin.slack < 0:
             critical_index.append(pin.pin_index_in_net)
     render_RES(restree.res.to_1d(), restree.x_list(), restree.y_list(),
                driver_index=restree.driver_index, critical_index=critical_index,
+               description=title,
                filepath=filepath, overflow_manager=overflow_manager)
     

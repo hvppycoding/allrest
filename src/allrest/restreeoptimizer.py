@@ -1,12 +1,12 @@
 from allrest.restreeabstractevaluator import RESTreeAbstractEvaluator
 from allrest.restree import RESTree
 from allrest.utils.nearestneighbors import get_nearest_neighbors
-from typing import List
+from typing import List, Callable
 from allrest.utils.unionfind import UnionFind
 import copy
 
 
-class Optimizer:
+class RESTreeOptimizer:
     def __init__(self, evaluator: RESTreeAbstractEvaluator):
         self.evaluator: RESTreeAbstractEvaluator = evaluator
         
@@ -68,13 +68,32 @@ class Optimizer:
             else:
                 break
         return RESTree(restree.net_id, restree.pins, best_RES)
+
+
+class MessageHandler:
+    def __init__(self):
+        self.message = []
+        
+    def callback(self, name, cost, msg):
+        self.message.append((name, cost, msg))
+        
+    def get_message(self):
+        message_strs = []
+        name_length = 0
+        for name, cost, msg in self.message:
+            name_length = max(name_length, len(name))
+        
+        for name, cost, msg in self.message:
+            message_strs.append(f"{name:<{name_length}}: {cost:.3g} {msg}")
             
+        return "\n".join(message_strs)
 
 if __name__ == "__main__":
     from allrest.utils.test import generate_random_restree
     from allrest.restreelengthevaluator import RESTreeLengthEvaluator
     from allrest.restreedetourevaluator import RESTreeDetourEvaluator
     from allrest.restreeoverflowevaluator import RESTreeOverflowEvaluator
+    from allrest.restreeweightedevaluator import RESTreeWeightedEvaluator
     from allrest.restreecompositeevaluator import RESTreeCompositeEvaluator
     from allrest.overflowmanager import OverflowManager
     from allrest.utils.test import generate_random_restree, generate_random_overflow_manager
@@ -86,11 +105,17 @@ if __name__ == "__main__":
     for i in range(1):
         ofm: OverflowManager = generate_random_overflow_manager(nx=nx, ny=ny)
         restree: RESTree = generate_random_restree(ny=ny, nx=nx, slack_mean=0, slack_std=10e-12)
-        evaluators = [RESTreeLengthEvaluator(weight=0.1), RESTreeDetourEvaluator(), RESTreeOverflowEvaluator(ofm)]
-        composite_evaluator = RESTreeCompositeEvaluator(evaluators=evaluators)
+        evaluators = [RESTreeLengthEvaluator(), RESTreeDetourEvaluator(), RESTreeOverflowEvaluator(ofm)]
+        weights = [0.1, 1.0, 0.5]
+        weighted_evaluators = [RESTreeWeightedEvaluator(evaluator, weight) for evaluator, weight in zip(evaluators, weights)]
+            
+        composite_evaluator = RESTreeCompositeEvaluator(evaluators=weighted_evaluators)
+        message_handler = MessageHandler()
+        composite_evaluator.get_cost(restree, message_handler.callback)
+        render_RESTree(restree, message_handler.get_message(), f"restree{i}_a.png", overflow_manager=ofm)
         
-        render_RESTree(restree, f"restree{i}_a.png", overflow_manager=ofm)
         
-        restree_new = Optimizer(composite_evaluator).optimize(restree)
-        
-        render_RESTree(restree_new, f"restree{i}_b.png", overflow_manager=ofm)
+        restree_new = RESTreeOptimizer(composite_evaluator).optimize(restree)
+        message_handler = MessageHandler()
+        composite_evaluator.get_cost(restree_new, message_handler.callback)
+        render_RESTree(restree_new, message_handler.get_message(), f"restree{i}_b.png", overflow_manager=ofm)

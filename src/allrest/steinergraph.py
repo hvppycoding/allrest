@@ -21,8 +21,14 @@ class SteinerGraph:
     def __init__(self, nodes: List[SteinerNode]):
         self._nodes: List[SteinerNode] = nodes
         
-    def get_node(self, index: int) -> SteinerNode:
+    def __getitem__(self, index: int) -> SteinerNode:
         return self._nodes[index]
+    
+    def __len__(self) -> int:
+        return len(self._nodes)
+    
+    def count_nodes(self) -> int:
+        return len(self._nodes)
         
     def __str__(self):
         node_strs = []
