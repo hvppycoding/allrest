@@ -156,6 +156,7 @@ class ForestOptimizerBuilder:
         
         res_list: List[List[int]] = []
         if res_file and os.path.exists(res_file):
+            outputmanager.info("Reading res file:", res_file)
             with open(res_file, 'r') as f:
                 lines = f.readlines()
                 for i, line in enumerate(lines):
@@ -169,6 +170,7 @@ class ForestOptimizerBuilder:
                         raise ValueError("RES length mismatch")
                     res_list.append(res_1d)
         else:
+            outputmanager.info("Running REST")
             from allrest.rest.wrapper import run_rest
             res_list = run_rest(input_data=rest_inputs, heuristic_2pin=True)
             

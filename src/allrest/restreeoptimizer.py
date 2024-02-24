@@ -1,7 +1,7 @@
 from allrest.restreeabstractevaluator import RESTreeAbstractEvaluator
 from allrest.restree import RESTree
 from allrest.utils.nearestneighbors import get_nearest_neighbors
-from typing import List, Callable
+from typing import List, Callable, Tuple
 from allrest.utils.unionfind import UnionFind
 import copy
 
@@ -15,7 +15,7 @@ class RESTreeOptimizer:
         y = restree.y_list()
         return get_nearest_neighbors(x, y)
     
-    def optimize(self, restree: RESTree) -> RESTree:
+    def optimize(self, restree: RESTree) -> Tuple[RESTree, float]:
         prev_cost = self.evaluator.get_cost(restree)
         N = restree.n_pins
         best_RES = copy.deepcopy(restree.res)
@@ -67,7 +67,7 @@ class RESTreeOptimizer:
                 best_RES.append(best_add)
             else:
                 break
-        return RESTree(restree.net_id, restree.pins, best_RES)
+        return RESTree(restree.net_id, restree.pins, best_RES), best_cost
 
 
 class MessageHandler:
