@@ -24,7 +24,7 @@ def build_evaluator(weight_wirelength: float, weight_detour: float, detour_cost_
     from allrest.restreecompositeevaluator import RESTreeCompositeEvaluator
 
     length_evaluator = RESTreeLengthEvaluator()
-    detour_evaluator = RESTreeDetourEvaluator()
+    detour_evaluator = RESTreeDetourEvaluator(detour_cost_function)
     overflow_evaluator = RESTreeOverflowEvaluator(
         overflow_manager=overflow_manager)
 
