@@ -12,9 +12,11 @@ from allrest.restreeabstractevaluator import RESTreeAbstractEvaluator
 from allrest.forestoptimizerbuilder import ForestOptimizerBuilder
 from allrest.steinertree import SteinerTree
 from allrest.treeconverter import TreeConverter
+from allrest.utils.messagehandler import MessageAggregateHandler
+import datetime
 
 
-def build_evaluator(weight_wirelength: float, weight_detour: float, weight_overflow: float, overflow_manager: OverflowManager):
+def build_evaluator(weight_wirelength: float, weight_detour: float, detour_cost_function: str, weight_overflow: float, overflow_manager: OverflowManager):
     from allrest.restreelengthevaluator import RESTreeLengthEvaluator
     from allrest.restreedetourevaluator import RESTreeDetourEvaluator
     from allrest.restreeoverflowevaluator import RESTreeOverflowEvaluator
@@ -71,8 +73,24 @@ def write_res(restrees: List[RESTree], output_path: str):
             res_str = " ".join([str(v) for v in tree.res.to_1d()])
             f.write("{}: {}\n".format(tree.net_id, res_str))
 
+def write_summary(start_time: datetime.datetime,
+                  end_time: datetime.datetime, 
+                  output_path: str):
+    with open(output_path, "w") as f:
+        f.write("Start Time: {}\n".format(start_time))
+        f.write("End Time: {}\n".format(end_time))
+        f.write("Elapsed Time: {}\n".format(end_time - start_time))
+                
 
-def run(input_file: str, weight_wirelength: float, weight_detour: float, weight_overflow: float):
+
+def run(input_file: str, weight_wirelength: float, weight_detour: float, detour_cost_function: str, weight_overflow: float):
+    outputmanager.info("===== Running ALLREST =====")
+    outputmanager.info("input_file:", input_file)
+    outputmanager.info("weight_wirelength:", weight_wirelength)
+    outputmanager.info("weight_detour:", weight_detour)
+    outputmanager.info("detour_cost_function:", detour_cost_function)
+    outputmanager.info("weight_overflow:", weight_overflow)
+    
     builder = ForestOptimizerBuilder()
     res_file: str = find_res_file()
     restrees: List[RESTree] = builder.create_restrees(input_file, res_file)
@@ -80,12 +98,26 @@ def run(input_file: str, weight_wirelength: float, weight_detour: float, weight_
         input_file)
     evaluator: RESTreeAbstractEvaluator = build_evaluator(weight_wirelength=weight_wirelength,
                                                           weight_detour=weight_detour,
+                                                          detour_cost_function=detour_cost_function,
                                                           weight_overflow=weight_overflow,
                                                           overflow_manager=overflow_manager)
+    msghandler = MessageAggregateHandler()
+    for tree in restrees:
+        msghandler.set_net_id(tree.net_id)
+        evaluator.get_cost(tree, msghandler.callback)
+    outputmanager.write_file("cost_0.csv", msghandler.get_message())
+    
     optimizer: ForestOptimizer = ForestOptimizer(restrees=restrees,
                                                  overflow_manager=overflow_manager,
                                                  evaluator=evaluator)
     optimizer.optimize()
+    
+    msghandler = MessageAggregateHandler()
+    for tree in optimizer.trees:
+        msghandler.set_net_id(tree.net_id)
+        evaluator.get_cost(tree, msghandler.callback)
+    outputmanager.write_file("cost_1.csv", msghandler.get_message())
+    
     steiner_tree_output_path = outputmanager.get_output_path("final_st_trees.txt")
     write_steiner_tree(optimizer.trees, output_path=steiner_tree_output_path)
     res_output_path = outputmanager.get_output_path("res.txt")
@@ -128,12 +160,15 @@ def main():
                         help="weight detour", default=0.9)
     parser.add_argument("--weight_overflow", type=float,
                         help="weight overflow", default=0.5)
+    parser.add_argument("--detour_cost_function", choices=["exp", "partial_linear"],
+                        help="detour cost function", default="exp")
     args = parser.parse_args()
 
     initialize_output(output_dir=args.outdir, log_level=args.loglevel)
 
     run(input_file=args.input_file, weight_wirelength=args.weight_wirelength,
-        weight_detour=args.weight_detour, weight_overflow=args.weight_overflow)
+        weight_detour=args.weight_detour, detour_cost_function=args.detour_cost_function,
+        weight_overflow=args.weight_overflow)
 
 
 if __name__ == "__main__":

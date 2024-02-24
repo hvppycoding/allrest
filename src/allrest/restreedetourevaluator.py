@@ -3,22 +3,40 @@ from allrest.restree import RESTree
 from allrest.pin import Pin
 from allrest.treeconverter import TreeConverter
 from allrest.steinergraph import SteinerGraph, SteinerNode
-from typing import Set, Dict, Callable
+from typing import Set, Dict, Callable, Union
 import copy
 import math
 
 
-def default_weight_function(pin: Pin) -> float:
+def exp_weight_function(pin: Pin) -> float:
     if pin.is_driver:
         return 0
     a = -pin.slack * 1E+11
     return math.exp(a)
 
+def partial_linear_weight_function(pin: Pin) -> float:
+    slack = pin.slack
+    if slack <= -10E-12:
+        return slack / -10E-12
+    elif slack <= 10E-12:
+        return 1.0
+    elif slack <= 30E-12:
+        return 1.0 - (slack - 10E-12) / 20E-12 * 0.8
+    else:
+        return 0.2
 
 class RESTreeDetourEvaluator(RESTreeAbstractEvaluator):
-    def __init__(self, weight_function: Callable[[Pin], float]=default_weight_function):
+    weight_functions = {
+        "exp": exp_weight_function,
+        "partial_linear": partial_linear_weight_function
+    }
+    
+    def __init__(self, weight_function: Union[Callable[[Pin], float], str]="exp"):
         super().__init__("RESTreeDetourEvaluator")
-        self.weight_function: Callable[[Pin], float] = weight_function
+        if isinstance(weight_function, str):
+            self.weight_function: Callable[[Pin], float] = RESTreeDetourEvaluator.weight_functions[weight_function]
+        else:
+            self.weight_function: Callable[[Pin], float] = weight_function
     
     def get_cost(self, restree: RESTree, callback: Callable[[str, float, str], None]=None) -> float:
         pathlengths: Dict[int, int] = self.calculate_pathlength_from_driver(restree)

@@ -44,8 +44,7 @@ class ForestOptimizer:
         for i, tree in enumerate(self.trees):
             if i % 100 == 0:
                 outputmanager.info("Optimizing tree {} / {}".format(i, len(self.trees)))
-            new_tree = self.treeoptimizer.optimize(tree)
-            new_cost = self.evalutor.get_cost(new_tree)
+            new_tree, new_cost = self.treeoptimizer.optimize(tree)
             
             if new_cost < self.tree_costs[i]:
                 if self.render_trees:

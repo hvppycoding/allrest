@@ -69,25 +69,6 @@ class RESTreeOptimizer:
                 break
         return RESTree(restree.net_id, restree.pins, best_RES), best_cost
 
-
-class MessageHandler:
-    def __init__(self):
-        self.message = []
-        
-    def callback(self, name, cost, msg):
-        self.message.append((name, cost, msg))
-        
-    def get_message(self):
-        message_strs = []
-        name_length = 0
-        for name, cost, msg in self.message:
-            name_length = max(name_length, len(name))
-        
-        for name, cost, msg in self.message:
-            message_strs.append(f"{name:<{name_length}}: {cost:.3g} {msg}")
-            
-        return "\n".join(message_strs)
-
 if __name__ == "__main__":
     from allrest.utils.test import generate_random_restree
     from allrest.restreelengthevaluator import RESTreeLengthEvaluator
@@ -98,6 +79,7 @@ if __name__ == "__main__":
     from allrest.overflowmanager import OverflowManager
     from allrest.utils.test import generate_random_restree, generate_random_overflow_manager
     from allrest.utils.render import render_RESTree
+    from allrest.utils.messagehandler import MessageHandler
     
     nx = 20
     ny = 10
