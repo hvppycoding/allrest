@@ -4,6 +4,8 @@ from allrest.restreeabstractevaluator import RESTreeAbstractEvaluator
 from typing import List, Dict, Set, Tuple
 from allrest.restreeoptimizer import RESTreeOptimizer
 from allrest.utils import outputmanager
+from allrest.restree import RESTree
+from allrest.utils.render import render_RESTree
 import copy
 
 class ForestOptimizer:
@@ -30,7 +32,18 @@ class ForestOptimizer:
     def optimize(self):
         for i, tree in enumerate(self.trees):
             new_tree = self.treeoptimizer.optimize(tree)
-            self.trees[i] = new_tree
-            self.tree_costs[i] = self.evalutor.get_cost(new_tree)
+            new_cost = self.evalutor.get_cost(new_tree)
+            
+            if new_cost < self.tree_costs[i]:
+                prev_filepath = outputmanager.get_output_path("optimized_tree_{}.png".format(i))
+                new_filepath = outputmanager.get_output_path("optimized_tree_{}_new.png".format(i))
+                render_RESTree(self.trees[i], filepath=prev_filepath, overflow_manager=self.overflow_manager)
+                render_RESTree(new_tree, filepath=new_filepath, overflow_manager=self.overflow_manager)
+                self.trees[i] = new_tree
+                self.tree_costs[i] = new_cost
+                
+                
+                
+            
         outputmanager.info("Optimized ForestOptimizer:" + str(sum(self.tree_costs)))
             

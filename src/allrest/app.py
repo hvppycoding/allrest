@@ -64,6 +64,12 @@ def write_steiner_tree(restrees: List[RESTree], output_path: str):
             f.write("BRANCH {}\n".format(len(stt.branch)))
             for branch in stt.branch:
                 f.write("{} {} {}\n".format(branch.x, branch.y, branch.n))
+                
+def write_res(restrees: List[RESTree], output_path: str):
+    with open(output_path, "w") as f:
+        for _, tree in enumerate(restrees):
+            res_str = " ".join([str(v) for v in tree.res.to_1d()])
+            f.write("{}: {}\n".format(tree.net_id, res_str))
 
 
 def run(input_file: str, weight_wirelength: float, weight_detour: float, weight_overflow: float):
@@ -80,12 +86,10 @@ def run(input_file: str, weight_wirelength: float, weight_detour: float, weight_
                                                  overflow_manager=overflow_manager,
                                                  evaluator=evaluator)
     optimizer.optimize()
-    write_steiner_tree(optimizer.trees, output_path="output.txt")
-    
-    
-        
-        
-
+    steiner_tree_output_path = outputmanager.get_output_path("final_st_trees.txt")
+    write_steiner_tree(optimizer.trees, output_path=steiner_tree_output_path)
+    res_output_path = outputmanager.get_output_path("res.txt")
+    write_res(restrees, output_path=res_output_path)
 
 def initialize_output(output_dir: str, log_level: str):
     import logging
@@ -128,7 +132,8 @@ def main():
 
     initialize_output(output_dir=args.outdir, log_level=args.loglevel)
 
-    run(input_file=args.input_file)
+    run(input_file=args.input_file, weight_wirelength=args.weight_wirelength,
+        weight_detour=args.weight_detour, weight_overflow=args.weight_overflow)
 
 
 if __name__ == "__main__":
