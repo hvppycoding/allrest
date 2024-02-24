@@ -56,3 +56,17 @@ def generate_my_restree() -> RESTree:
          [5, 6]]
     )
     return RESTree(0, pins, res)
+
+
+def generate_random_overflow_manager(nx: int=10, ny:int=10):
+    import numpy as np
+    from allrest.overflowmanager import OverflowManager
+    vcapacity = np.random.randint(8, 10, size=(ny, nx))
+    hcapacity = np.random.randint(8, 10, size=(ny, nx))
+    vusage = np.random.randint(8, 10, size=(ny, nx))
+    husage = np.random.randint(8, 10, size=(ny, nx))
+    ofm = OverflowManager(vcapacity=vcapacity, hcapacity=hcapacity)
+    ofm.vusage_map = vusage
+    ofm.husage_map = husage
+    ofm.update_overflows()
+    return ofm

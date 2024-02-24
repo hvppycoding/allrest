@@ -88,6 +88,7 @@ class ConverterNode:
     def add_right_neighbor(self, neighbor: "ConverterNode") -> None:
         if neighbor.x < self.x:
             raise ValueError("Neighbor is not to the right")
+        assert neighbor not in self.right_neighbors
         for i in range(len(self.right_neighbors) - 1, -1, -1):
             if self.right_neighbors[i].x <= neighbor.x:
                 self.right_neighbors.insert(i + 1, neighbor)
@@ -98,6 +99,7 @@ class ConverterNode:
     def add_left_neighbor(self, neighbor: "ConverterNode") -> None:
         if neighbor.x > self.x:
             raise ValueError("Neighbor is not to the left")
+        assert neighbor not in self.left_neighbors
         for i in range(len(self.left_neighbors) - 1, -1, -1):
             if self.left_neighbors[i].x >= neighbor.x:
                 self.left_neighbors.insert(i + 1, neighbor)
@@ -108,6 +110,7 @@ class ConverterNode:
     def add_up_neighbor(self, neighbor: "ConverterNode") -> None:
         if neighbor.y < self.y:
             raise ValueError("Neighbor is not to the up")
+        assert neighbor not in self.up_neighbors
         for i in range(len(self.up_neighbors) - 1, -1, -1):
             if self.up_neighbors[i].y <= neighbor.y:
                 self.up_neighbors.insert(i + 1, neighbor)
@@ -118,6 +121,7 @@ class ConverterNode:
     def add_down_neighbor(self, neighbor: "ConverterNode") -> None:
         if neighbor.y > self.y:
             raise ValueError("Neighbor is not to the down")
+        assert neighbor not in self.down_neighbors
         for i in range(len(self.down_neighbors) - 1, -1, -1):
             if self.down_neighbors[i].y >= neighbor.y:
                 self.down_neighbors.insert(i + 1, neighbor)
@@ -208,7 +212,8 @@ class TreeConverter:
         self.initialize_nodes()
         self.initialize_edges()
         self.steinerize()
-        return self.to_steiner_graph()
+        res = self.to_steiner_graph()
+        return res
 
     def best_steiner_for_node(self, node: ConverterNode) -> SteinerCandidate:
         best_gain = 0
@@ -259,6 +264,7 @@ class TreeConverter:
             
         while not pq.empty():
             best: SteinerCandidate = node2steiner[pq.pop_task()]
+            
             if best.gain <= 0:
                 break
             
@@ -268,7 +274,7 @@ class TreeConverter:
             
             new_node = False
             steiner_node = None
-            
+
             if best.x == op1.x and best.y == op1.y:
                 steiner_node = op1
             elif best.x == op2.x and best.y == op2.y:
@@ -309,7 +315,6 @@ class TreeConverter:
                 if new_node:
                     node.add_horizontal_neighbor(steiner_node)
                     steiner_node.add_vertical_neighbor(node)
-                    
                     new_best_steiner = self.best_steiner_for_node(steiner_node)
                     node2steiner[steiner_node] = new_best_steiner
                     pq.add_task(steiner_node, -new_best_steiner.gain)

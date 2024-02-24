@@ -33,6 +33,9 @@ class RES:
         self.check_type(value)
         self.RES[index] = value
         
+    def pop(self, index: int=-1) -> List[int]:
+        return self.RES.pop(index)
+        
     def remove(self, value: List[int]) -> None:
         self.check_type(value)
         self.RES.remove(value)

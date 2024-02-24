@@ -4,7 +4,9 @@ from typing import List
 
 
 class RESTree:
-    def __init__(self, net_id: int, pins: List[Pin] , res: RES):    
+    def __init__(self, net_id: int, pins: List[Pin], res: RES):    
+        if len(pins) != len(res) + 1:
+            raise ValueError("Number of pins and number of res do not match")
         for i, pin in enumerate(pins):
             if pin.pin_index_in_net != i:
                 raise ValueError("Pin index does not match index")

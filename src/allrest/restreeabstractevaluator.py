@@ -26,21 +26,13 @@ if __name__ == "__main__":
     from allrest.restreedetourevaluator import RESTreeDetourEvaluator
     from allrest.restreeoverflowevaluator import RESTreeOverflowEvaluator
     from allrest.overflowmanager import OverflowManager
-    from allrest.utils.test import generate_random_restree
+    from allrest.utils.test import generate_random_restree, generate_random_overflow_manager
     
     nx = 20
     ny = 10
     
     for i in range(1):
-        vcapacity = np.random.randint(8, 10, size=(ny, nx))
-        hcapacity = np.random.randint(8, 10, size=(ny, nx))
-        vusage = np.random.randint(8, 10, size=(ny, nx))
-        husage = np.random.randint(8, 10, size=(ny, nx))
-        ofm = OverflowManager(vcapacity=vcapacity, hcapacity=hcapacity)
-        ofm.vusage_map = vusage
-        ofm.husage_map = husage
-        ofm.update_overflows()
-        
+        ofm: OverflowManager = generate_random_overflow_manager(nx=nx, ny=ny)
         restree: RESTree = generate_random_restree(ny=ny, nx=nx, slack_mean=0, slack_std=10e-12)
         wirelength = RESTreeLengthEvaluator().get_cost(restree)
         detour = RESTreeDetourEvaluator().get_cost(restree)

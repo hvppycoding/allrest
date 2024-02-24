@@ -34,7 +34,7 @@ class RESTreeDetourEvaluator(RESTreeAbstractEvaluator):
             slack = restree.pins[i].slack
             weight = self.weight_function(restree.pins[i])
             cost = weight * detour
-            print(f"Pin {i} detour: {detour}, cost: {cost:.6f}, weight: {weight:.6f}, slack: {slack:.6g}")
+            # print(f"Pin {i} detour: {detour}, cost: {cost:.6f}, weight: {weight:.6f}, slack: {slack:.6g}")
             total_cost += cost
         return total_cost
     
