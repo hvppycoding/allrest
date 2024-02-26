@@ -5,7 +5,7 @@ from allrest.restree import RESTree
 
 class RESTreeWeightedEvaluator(RESTreeAbstractEvaluator):
     def __init__(self, evaluator: RESTreeAbstractEvaluator, weight: float=1.0):
-        super().__init__("RESTreeWeightedEvaluator")
+        super().__init__("Weighted" + evaluator.name)
         self.evaluator: RESTreeAbstractEvaluator = evaluator
         self.weight: float = weight
         

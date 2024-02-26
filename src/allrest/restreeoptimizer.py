@@ -3,6 +3,7 @@ from allrest.restree import RESTree
 from allrest.utils.nearestneighbors import get_nearest_neighbors
 from typing import List, Callable, Tuple
 from allrest.utils.unionfind import UnionFind
+from allrest.utils import outputmanager
 import copy
 
 
@@ -25,6 +26,7 @@ class RESTreeOptimizer:
         best_delete = None
         best_add = None
         
+        n_iterations = 0
         while True:
             prev_cost = best_cost
             for elem in best_RES:
@@ -52,6 +54,8 @@ class RESTreeOptimizer:
                     
                 for nv in range(N):
                     for nh in nearest_neighbors[nv]:
+                        if dv == nv and dh == nh:
+                            continue
                         if unionfind.connected(nv, nh):
                             continue
                         new_res.append([nv, nh])
@@ -65,8 +69,11 @@ class RESTreeOptimizer:
             if best_cost < prev_cost:
                 best_RES.remove(best_delete)
                 best_RES.append(best_add)
+                n_iterations += 1
             else:
+                outputmanager.info("Net ID: {}, #Pins: {}, #Iterations: {}".format(restree.net_id, restree.n_pins, n_iterations))
                 break
+            
         return RESTree(restree.net_id, restree.pins, best_RES), best_cost
 
 if __name__ == "__main__":
