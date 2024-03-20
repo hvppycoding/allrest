@@ -23,8 +23,8 @@ def get_nearest_neighbors(x: List[int], y: List[int]) -> List[List[int]]:
 
     # Initialize arrays to track quadrant boundaries
     ur = [np.inf] * pt_count
-    lr = [-np.inf] * pt_count
-    ul = [np.inf] * pt_count
+    lr = [np.inf] * pt_count
+    ul = [-np.inf] * pt_count
     ll = [-np.inf] * pt_count
 
     # Sort indices based on y (primary) and x (secondary) coordinates
